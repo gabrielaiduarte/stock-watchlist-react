@@ -1,13 +1,17 @@
-import Header from "./assets/components/Header";
 import "./App.css";
 import { useState, useEffect } from "react";
+import { fetchQuotes } from "./apiAdaptor";
+import Header from "./assets/components/Header";
 import AddTickerForm from "./assets/components/AddTickerForm";
-import { nanoid } from "nanoid"
+import TickerRow from "./assets/components/TickerRow";
 
-const LS_KEY = "sw_watchlist_v1"
+const LS_KEY = "sw_watchlist_v1";
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Load symbols from localStorage on first render
   const [symbols, setSymbols] = useState(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -15,98 +19,96 @@ export default function App() {
     } catch {
       return [];
     }
-  })
-  const [loading, setLoading] = useState(false);
+  });
+
+  const [quotes, setQuotes] = useState([]);
   const [error, setError] = useState("");
 
+  // Save symbols to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify(symbols))
-  }, [symbols])
+    localStorage.setItem(LS_KEY, JSON.stringify(symbols));
+  }, [symbols]);
 
-  function handleAdd(symbol){
-    setSymbols((prev) => {
-      if (prev.includes(symbol)) return prev;
-      const updated = [...prev, symbol]
-      return updated
-    })
+  // Add ticker to watchlist
+  function handleAdd(symbol) {
+    setSymbols((prevSymbols) => [...prevSymbols, symbol]);
   }
 
-  function handleRemove(symbol){
-    setSymbols(prev => prev.filter(s => s !== symbol))
+  // Remove ticker from watchlist (and from quotes)
+  function handleRemove(symbol) {
+    setSymbols((prev) => prev.filter((s) => s !== symbol));
+    setQuotes((prev) => prev.filter((q) => q.symbol !== symbol));
   }
 
+  // Refresh quotes from API
   async function handleRefresh() {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError("");
-      await new Promise((r) => setTimeout(r, 600));
+
+      if (symbols.length > 0) {
+        const data = await fetchQuotes(symbols);
+        setQuotes(data);
+      } else {
+        setQuotes([]);
+      }
+
       setLastUpdated(new Date());
     } catch (e) {
       console.error(e);
-      setError(e?.message || "Failed to refresh");
+      setError(e?.message || "Failed to refresh prices");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
+  // On first load, if there are saved symbols, fetch their quotes
   useEffect(() => {
-    handleRefresh();
-  }, []);
+    if (symbols.length) {
+      handleRefresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
 
   return (
     <>
       <Header
+        isLoading={isLoading}
         onRefresh={handleRefresh}
         lastUpdated={lastUpdated}
-        loading={loading}
       />
 
-      <div style={{padding: "0 40px", marginTop: 16}}>
+      <div className="main-content">
         <AddTickerForm
           onAdd={handleAdd}
           existingSymbols={symbols}
-          disabled={loading}
+          disabled={isLoading}
         />
 
-        {!symbols.length ? (
-          <p style={{ opacity: 0.75, marginTop: 16}}>
-            <strong>No stocks in Watchlist.</strong>
-            Add your first stock using the form above
+        {error && <p className="error-msg">{error}</p>}
+
+        {!quotes.length ? (
+          <p className="empty-msg">
+            <strong>No stocks in Watchlist.</strong>{" "}
+            Add your first stock using the form above.
           </p>
         ) : (
-          <div style={{ marginTop: 16 }}>
-            <h3 style={{margin: "8px 0"}}>Watchlist</h3>
-            <ul>
-              {symbols.map((s) => (
-                  <li 
-                    key={s}
-                    style={{ display: "flex", alignItems: "center, gap: 8"}}
-                  >
-                    <span>{s}</span>
-                    <button
-                      type="button"
-                      title={`Remove ${s}`}
-                      disabled={loading}
-                      onClick={() => handleRemove(s)}
-                      style={{ cursor: loading ? "not-allowed" : "pointer"}}
-                    >
-                       x 
-                    </button>
-                  </li>
-              ))}
-
-            </ul>
+          <div className="watchlist-grid">
+            {quotes.map((q) => (
+              <div key={q.symbol} className="row-remove-wrapper">
+                <TickerRow q={q} />
+                <button
+                  className="remove-btn"
+                  onClick={() => handleRemove(q.symbol)}
+                  disabled={isLoading}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         )}
-
       </div>
-
-      {error && (
-        <p style={{ color: "orange", padding: "0 40px" }}>
-          Live data unavailable: {error}
-        </p>
-      )}
-
     </>
   );
 }
