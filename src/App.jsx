@@ -67,6 +67,9 @@ export default function App() {
     if (symbols.length) {
       handleRefresh();
     }
+    // maybe this is necessary, but in general i find if you need to use
+    // this there's another way to design your components so that you don't 
+    // need to use this
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once on mount
 
@@ -94,6 +97,7 @@ export default function App() {
           </p>
         ) : (
           <div className="watchlist-grid">
+            {/* i'd probably make this its own component, e.g. QuoteList or something. in general more components is better than fewer! */}
             {quotes.map((q) => (
               <div key={q.symbol} className="row-remove-wrapper">
                 <TickerRow q={q} />

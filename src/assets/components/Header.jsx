@@ -4,6 +4,7 @@ export default function Header(props) {
 
     const time =
         props.lastUpdated
+        // good candidate for a helper function here!
         ? new Date(props.lastUpdated).toLocaleTimeString(
             [], {hour: "2-digit", minute:"2-digit"}) : "--:--";
 
