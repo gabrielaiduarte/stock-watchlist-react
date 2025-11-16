@@ -1,11 +1,15 @@
 
 export default function TickerRow(props) {
+    // props nit: if everything lives on props.q, i'd just pass in the key-value pairs of q directly
+    // rather than wrapping everything in a single q prop. it makes referencing the data
+    // in here a little clunky
     const isUp = props.q.change > 0
     const sign = isUp ? "+" : ""
 
     return (
         <div className="ticker-card">
             <div className={`ticker-card ${isUp ? "border-up" : "border-down"}`}>
+                {/* did chatgpt add these comments? these are what i have fondly heard referred to as "this is a cat" style comments. AI loves them but i find them mostly unnecessary. */}
                 {/* header */}
                 <div className="ticker-header">
                     <h2 className="tickerSymbol">{props.q.symbol}</h2>

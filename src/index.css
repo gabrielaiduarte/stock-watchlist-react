@@ -1,3 +1,8 @@
+/* 
+in general, in react it's better to separate CSS files by components.
+having one global css file with all your styles isn't generally practiced.
+*/
+
 /* ===========================
    GLOBAL
    =========================== */

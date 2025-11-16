@@ -1,6 +1,16 @@
+// couple of things:
+// 1. the components folder probably shouldn't be inside of assets; assets
+// is typically reserved for static assets like images. better to have components
+// be a sibling of assets, and a child of components.
+
+// 2. your indentation in these files is inconsistent with your indentation in the top level js(x) files. semicolon usage in here is inconsistent too. this is another thing a formatting tool can help automate for you!
+
 import { useState, useRef } from "react"
 
 export default function AddTickerForm(props) {
+    // in general, it's helpful to explicitly destucture the props
+    // so that you can tell from the function definition what props are passed in
+    // eg. function AddTickerForm({ existingSymbols, onAdd, disabled }) { /* ... */ }
 
     const [symbol, setSymbol] = useState("");
     const [error, setError] = useState("")
@@ -41,6 +51,7 @@ export default function AddTickerForm(props) {
                     value={symbol}
                     disabled={props.disabled}
                     onChange={(e) => {
+                        // slight preference for defining this up above as a handleChange function, so that you're doing less mixing of logic and UI in the return here
                         setSymbol(e.target.value);
                         if (error) setError("")
                     }}
